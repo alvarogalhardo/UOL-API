@@ -54,7 +54,6 @@ app.post("/participants", async (req, res) => {
     });
     res.sendStatus(201);
   } catch (err) {
-    console.log(err);
     res.sendStatus(500);
   }
 });
@@ -71,16 +70,14 @@ app.get("/participants", async (req, res) => {
 app.post("/messages", async (req, res) => {
   try {
     const user = req.headers.user;
-
     const exists = await db.collection("participants").findOne({ name: user });
     if (!exists) {
       return res.sendStatus(422);
     }
     const { to, text, type } = req.body;
-    const validation = messagesSchema.validate(req.body, { abortEarly: false });
-
-    if (validation.error) {
-      const errors = validation.error.details.map((detail) => detail.message);
+    const { error } = messagesSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+      const errors = error.details.map((detail) => detail.message);
       return res.status(422).send(errors);
     }
     const time = dayjs(Date.now()).locale("pt").format("HH:mm:ss");
@@ -89,7 +86,6 @@ app.post("/messages", async (req, res) => {
       .insertOne({ from: user, to, text, type, time });
     res.sendStatus(201);
   } catch (err) {
-    console.log(err);
     res.sendStatus(500);
   }
 });
@@ -156,6 +152,6 @@ async function deleteInactives() {
   });
 }
 
-const intervalID = setInterval(deleteInactives, INTERVAL);
+const deleteInactivesID = setInterval(deleteInactives, INTERVAL);
 
 app.listen(PORT);
